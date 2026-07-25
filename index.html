@@ -90,6 +90,15 @@
   .reel-frame { position:relative; width:100%; aspect-ratio:16/9; background:var(--blue); border-radius:6px; overflow:hidden;
                 box-shadow:0 30px 80px rgba(1,1,124,0.16); }
   .reel-frame video { width:100%; height:100%; object-fit:cover; display:block; }
+  /* tap-to-unmute (autoplay must start muted, so audio needs a user gesture) */
+  .reel-sound { position:absolute; right:14px; bottom:14px; z-index:3; display:inline-flex; align-items:center; gap:8px;
+                padding:9px 14px; border:none; border-radius:100px; cursor:pointer; color:#fff;
+                background:rgba(1,1,124,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+                font-family:var(--mono); font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+                transition:background 0.25s ease, opacity 0.25s ease; }
+  .reel-sound:hover { background:rgba(1,1,124,0.8); }
+  .reel-sound:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+  .reel-sound .ico { font-size:15px; line-height:1; }
   .reel-ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
              color:#fff; text-align:center; padding:24px; }
   .reel-ph .dot { width:54px; height:54px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.5);
@@ -157,14 +166,16 @@
 <section class="reel" id="reel">
   <div class="wrap">
     <div class="sec-label reveal">01 — Reel</div>
-    <div class="reel-frame reveal">
-      <!-- Cuando exista videos/reel.mp4 se reproduce solo; mientras, placeholder. -->
-      <video id="reelVideo" muted loop playsinline preload="metadata" poster="" style="display:none"></video>
+    <div class="reel-frame reveal" id="reelFrame">
+      <!-- autoplay muted (para que cargue/se vea en mobile) + botón de sonido -->
+      <video id="reelVideo" muted loop playsinline webkit-playsinline preload="metadata" src="videos/reel.mp4"></video>
       <div class="reel-ph" id="reelPh">
         <div class="dot"></div>
-        <span class="mono">Reel · video pendiente</span>
-        <span class="mono" style="opacity:0.55">videos/reel.mp4</span>
+        <span class="mono">Cargando reel…</span>
       </div>
+      <button class="reel-sound" id="reelSound" type="button" aria-label="Activar sonido">
+        <span class="ico" aria-hidden="true">🔇</span><span class="lbl">Sonido</span>
+      </button>
     </div>
     <div class="reel-cap reveal">
       <span class="t">Pablo Fusco · Reel</span>
@@ -244,19 +255,42 @@
 
 // ── reel: swap placeholder → video once the file exists ─
 (function(){
-  var v = document.getElementById('reelVideo'), ph = document.getElementById('reelPh');
-  if(!v) return;
-  v.src = 'videos/reel.mp4';
-  v.addEventListener('loadeddata', function(){
-    v.style.display = 'block';
-    if(ph) ph.style.display = 'none';
-    // play/pause with viewport visibility
-    var io = new IntersectionObserver(function(ents){
-      ents.forEach(function(e){ if(e.isIntersecting){ v.play().catch(function(){}); } else { v.pause(); } });
-    }, {threshold:0.35});
-    io.observe(v);
-  });
-  // if the file 404s, loadeddata never fires → placeholder stays. Clean.
+  var v = document.getElementById('reelVideo'),
+      ph = document.getElementById('reelPh'),
+      frame = document.getElementById('reelFrame'),
+      sound = document.getElementById('reelSound');
+  if(!v || !frame) return;
+
+  function hidePh(){ if(ph){ ph.style.display = 'none'; } }
+  v.addEventListener('playing', hidePh);
+  v.addEventListener('loadeddata', hidePh);
+
+  // Autoplay MUST be muted on mobile — observe the container (not the video, which
+  // could be 0-sized before it decodes) so play() is actually triggered on iOS.
+  var io = new IntersectionObserver(function(ents){
+    ents.forEach(function(e){
+      if(e.isIntersecting){ v.play().then(hidePh).catch(function(){}); }
+      else { v.pause(); }
+    });
+  }, {threshold:0.25});
+  io.observe(frame);
+
+  // Sound: browsers block unmuted autoplay, so audio needs a tap.
+  function setIcon(){
+    if(!sound) return;
+    sound.querySelector('.ico').textContent = v.muted ? '🔇' : '🔊';
+    sound.querySelector('.lbl').textContent = v.muted ? 'Sonido' : 'Silenciar';
+    sound.setAttribute('aria-label', v.muted ? 'Activar sonido' : 'Silenciar');
+  }
+  function toggleSound(){
+    v.muted = !v.muted;
+    if(!v.muted){ v.volume = 1; v.play().catch(function(){}); }
+    setIcon();
+  }
+  if(sound) sound.addEventListener('click', toggleSound);
+  // tapping the video also toggles audio
+  v.addEventListener('click', function(){ toggleSound(); });
+  setIcon();
 })();
 </script>
 </body>
