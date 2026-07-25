@@ -90,15 +90,27 @@
   .reel-frame { position:relative; width:100%; aspect-ratio:16/9; background:var(--blue); border-radius:6px; overflow:hidden;
                 box-shadow:0 30px 80px rgba(1,1,124,0.16); }
   .reel-frame video { width:100%; height:100%; object-fit:cover; display:block; }
-  /* tap-to-unmute (autoplay must start muted, so audio needs a user gesture) */
-  .reel-sound { position:absolute; right:14px; bottom:14px; z-index:3; display:inline-flex; align-items:center; gap:8px;
-                padding:9px 14px; border:none; border-radius:100px; cursor:pointer; color:#fff;
-                background:rgba(1,1,124,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-                font-family:var(--mono); font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
-                transition:background 0.25s ease, opacity 0.25s ease; }
-  .reel-sound:hover { background:rgba(1,1,124,0.8); }
-  .reel-sound:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
-  .reel-sound .ico { font-size:15px; line-height:1; }
+  /* ── custom flat control bar ── */
+  .reel-ctrl { position:absolute; left:0; right:0; bottom:0; z-index:3; display:flex; align-items:center; gap:12px;
+               padding:26px 16px 14px; color:#fff;
+               background:linear-gradient(to top, rgba(1,1,124,0.72), rgba(1,1,124,0) 100%);
+               opacity:0; transform:translateY(6px); transition:opacity 0.28s ease, transform 0.28s ease; pointer-events:none; }
+  .reel-frame:hover .reel-ctrl, .reel-ctrl.show { opacity:1; transform:none; pointer-events:auto; }
+  .rc-btn { flex:none; width:34px; height:34px; padding:0; border:none; background:none; cursor:pointer; color:#fff;
+            display:inline-flex; align-items:center; justify-content:center; border-radius:6px; transition:background 0.2s ease; }
+  .rc-btn:hover { background:rgba(255,255,255,0.16); }
+  .rc-btn:focus-visible { outline:2px solid var(--cyan); outline-offset:1px; }
+  .rc-btn svg { width:20px; height:20px; display:block; fill:currentColor; }
+  #rcFs svg { width:18px; height:18px; }
+  .rc-seek { position:relative; flex:1; height:16px; display:flex; align-items:center; cursor:pointer; touch-action:none; }
+  .rc-seek::before { content:''; position:absolute; left:0; right:0; height:3px; border-radius:3px; background:rgba(255,255,255,0.28); }
+  .rc-buf { position:absolute; left:0; height:3px; border-radius:3px; background:rgba(255,255,255,0.35); width:0; }
+  .rc-fill { position:absolute; left:0; height:3px; border-radius:3px; background:#fff; width:0; }
+  .rc-knob { position:absolute; right:-6px; top:50%; width:12px; height:12px; border-radius:50%; background:#fff;
+             transform:translateY(-50%) scale(0); transition:transform 0.15s ease; box-shadow:0 1px 4px rgba(0,0,0,0.3); }
+  .rc-seek:hover .rc-knob, .rc-seek.drag .rc-knob { transform:translateY(-50%) scale(1); }
+  .rc-time { flex:none; font-family:var(--mono); font-size:11px; letter-spacing:0.08em; opacity:0.85; font-variant-numeric:tabular-nums; min-width:74px; }
+  @media (max-width:520px){ .rc-time { display:none; } .reel-ctrl { gap:8px; } }
   .reel-ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
              color:#fff; text-align:center; padding:24px; }
   .reel-ph .dot { width:54px; height:54px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.5);
@@ -167,15 +179,19 @@
   <div class="wrap">
     <div class="sec-label reveal">01 — Reel</div>
     <div class="reel-frame reveal" id="reelFrame">
-      <!-- autoplay muted (para que cargue/se vea en mobile) + botón de sonido -->
+      <!-- autoplay muted (para que cargue/se vea en mobile) + controles custom -->
       <video id="reelVideo" muted loop playsinline webkit-playsinline preload="metadata" src="videos/reel.mp4"></video>
       <div class="reel-ph" id="reelPh">
         <div class="dot"></div>
         <span class="mono">Cargando reel…</span>
       </div>
-      <button class="reel-sound" id="reelSound" type="button" aria-label="Activar sonido">
-        <span class="ico" aria-hidden="true">🔇</span><span class="lbl">Sonido</span>
-      </button>
+      <div class="reel-ctrl" id="reelCtrl">
+        <button class="rc-btn" id="rcPlay" type="button" aria-label="Reproducir/Pausar"></button>
+        <div class="rc-seek" id="rcSeek"><div class="rc-buf" id="rcBuf"></div><div class="rc-fill" id="rcFill"><span class="rc-knob"></span></div></div>
+        <span class="rc-time" id="rcTime">0:00 / 0:00</span>
+        <button class="rc-btn" id="rcMute" type="button" aria-label="Sonido"></button>
+        <button class="rc-btn" id="rcFs" type="button" aria-label="Pantalla completa"></button>
+      </div>
     </div>
     <div class="reel-cap reveal">
       <span class="t">Pablo Fusco · Reel</span>
@@ -258,39 +274,79 @@
   var v = document.getElementById('reelVideo'),
       ph = document.getElementById('reelPh'),
       frame = document.getElementById('reelFrame'),
-      sound = document.getElementById('reelSound');
+      ctrl = document.getElementById('reelCtrl'),
+      playB = document.getElementById('rcPlay'),
+      muteB = document.getElementById('rcMute'),
+      fsB   = document.getElementById('rcFs'),
+      seek  = document.getElementById('rcSeek'),
+      fill  = document.getElementById('rcFill'),
+      buf   = document.getElementById('rcBuf'),
+      timeE = document.getElementById('rcTime');
   if(!v || !frame) return;
 
-  function hidePh(){ if(ph){ ph.style.display = 'none'; } }
-  v.addEventListener('playing', hidePh);
-  v.addEventListener('loadeddata', hidePh);
+  // flat SVG icons (fill = currentColor)
+  var IC = {
+    play:'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+    pause:'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+    vol:'<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.74 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77S18.01 4.14 14 3.23z"/></svg>',
+    mute:'<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/><line x1="15" y1="9" x2="21" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    fs:'<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>'
+  };
+  playB.innerHTML = IC.play; fsB.innerHTML = IC.fs;
+  function setMute(){ muteB.innerHTML = v.muted ? IC.mute : IC.vol; muteB.setAttribute('aria-label', v.muted?'Activar sonido':'Silenciar'); }
+  setMute();
 
-  // Autoplay MUST be muted on mobile — observe the container (not the video, which
-  // could be 0-sized before it decodes) so play() is actually triggered on iOS.
+  function fmt(s){ s=Math.max(0,s|0); var m=(s/60)|0, ss=s%60; return m+':'+(ss<10?'0':'')+ss; }
+
+  // ── placeholder + autoplay (muted → required for mobile autoplay) ──
+  function hidePh(){ if(ph){ ph.style.display='none'; } }
+  v.addEventListener('playing', hidePh); v.addEventListener('loadeddata', hidePh);
   var io = new IntersectionObserver(function(ents){
-    ents.forEach(function(e){
-      if(e.isIntersecting){ v.play().then(hidePh).catch(function(){}); }
-      else { v.pause(); }
-    });
+    ents.forEach(function(e){ if(e.isIntersecting){ v.play().then(hidePh).catch(function(){}); } else { v.pause(); } });
   }, {threshold:0.25});
-  io.observe(frame);
+  io.observe(frame);   // observe the frame, never the (possibly 0-sized) video
 
-  // Sound: browsers block unmuted autoplay, so audio needs a tap.
-  function setIcon(){
-    if(!sound) return;
-    sound.querySelector('.ico').textContent = v.muted ? '🔇' : '🔊';
-    sound.querySelector('.lbl').textContent = v.muted ? 'Sonido' : 'Silenciar';
-    sound.setAttribute('aria-label', v.muted ? 'Activar sonido' : 'Silenciar');
-  }
-  function toggleSound(){
-    v.muted = !v.muted;
-    if(!v.muted){ v.volume = 1; v.play().catch(function(){}); }
-    setIcon();
-  }
-  if(sound) sound.addEventListener('click', toggleSound);
-  // tapping the video also toggles audio
-  v.addEventListener('click', function(){ toggleSound(); });
-  setIcon();
+  // ── play / pause ──
+  function toggle(){ if(v.paused){ v.play().catch(function(){}); } else { v.pause(); } }
+  playB.addEventListener('click', toggle);
+  v.addEventListener('play',  function(){ playB.innerHTML=IC.pause; scheduleHide(); });
+  v.addEventListener('pause', function(){ playB.innerHTML=IC.play;  showCtrl(true); });
+
+  // ── progress + time ──
+  v.addEventListener('timeupdate', function(){
+    if(v.duration){ fill.style.width=(v.currentTime/v.duration*100)+'%'; }
+    timeE.textContent = fmt(v.currentTime)+' / '+fmt(v.duration||0);
+  });
+  v.addEventListener('progress', function(){
+    try{ if(v.buffered.length && v.duration){ buf.style.width=(v.buffered.end(v.buffered.length-1)/v.duration*100)+'%'; } }catch(e){}
+  });
+
+  // ── seek (click + drag, touch-friendly via pointer events) ──
+  function seekTo(x){ var r=seek.getBoundingClientRect(); var t=Math.min(1,Math.max(0,(x-r.left)/r.width)); if(v.duration){ v.currentTime=t*v.duration; fill.style.width=(t*100)+'%'; } }
+  seek.addEventListener('pointerdown', function(e){ seek.classList.add('drag'); try{seek.setPointerCapture(e.pointerId);}catch(_){} seekTo(e.clientX); });
+  seek.addEventListener('pointermove', function(e){ if(seek.classList.contains('drag')) seekTo(e.clientX); });
+  function endDrag(){ seek.classList.remove('drag'); }
+  seek.addEventListener('pointerup', endDrag); seek.addEventListener('pointercancel', endDrag);
+
+  // ── mute / unmute (audio needs a user gesture) ──
+  muteB.addEventListener('click', function(){ v.muted=!v.muted; if(!v.muted){ v.volume=1; v.play().catch(function(){}); } setMute(); });
+
+  // ── fullscreen (with iOS video fallback) ──
+  fsB.addEventListener('click', function(){
+    var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if(fsEl){ (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); return; }
+    if(frame.requestFullscreen) frame.requestFullscreen();
+    else if(frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+    else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen();   // iOS Safari
+  });
+
+  // ── auto-show/hide controls ──
+  var hideT;
+  function showCtrl(persist){ ctrl.classList.add('show'); clearTimeout(hideT); if(!persist && !v.paused){ hideT=setTimeout(function(){ ctrl.classList.remove('show'); }, 2800); } }
+  function scheduleHide(){ showCtrl(false); }
+  frame.addEventListener('pointermove', function(){ showCtrl(false); });
+  frame.addEventListener('pointerdown', function(){ showCtrl(false); });
+  showCtrl(true);
 })();
 </script>
 </body>
