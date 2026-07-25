@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pablo Fusco · Director</title>
+<meta name="description" content="Pablo Fusco — Director. Reel, about & contact." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter+Tight:ital,wght@0,400;0,600;0,900;1,400;1,900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#01017c;
+    --bg:#ffffff;
+    --cyan:#00e9ff;
+    --magenta:#ff2bd6;
+    --line:rgba(1,1,124,0.15);
+    --mono:'JetBrains Mono',monospace;
+    --sans:'Inter Tight',sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--blue);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection { background:var(--blue); color:#fff; }
+
+  /* ── shared bits ──────────────────────────────────────── */
+  .wrap { width:100%; max-width:1200px; margin:0 auto; padding:0 clamp(20px,5vw,64px); }
+  .mono { font-family:var(--mono); font-weight:400; font-size:12px; letter-spacing:0.22em; text-transform:uppercase; }
+  .sec-label { font-family:var(--mono); font-size:12px; letter-spacing:0.22em; text-transform:uppercase; opacity:0.5; margin-bottom:clamp(18px,3vh,34px); }
+
+  /* reveal-on-scroll */
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.in { opacity:1; transform:none; }
+
+  /* ── top bar ──────────────────────────────────────────── */
+  .topbar { position:fixed; top:0; left:0; right:0; z-index:50; display:flex; justify-content:space-between; align-items:center;
+            padding:clamp(16px,2.4vh,26px) clamp(20px,5vw,64px); mix-blend-mode:difference; color:#fff; pointer-events:none; }
+  .topbar .mono { pointer-events:auto; }
+
+  /* ── hero ─────────────────────────────────────────────── */
+  .hero { min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+          position:relative; padding:120px 20px 90px; }
+  .hero-kicker { opacity:0; animation:fadeUp 0.9s ease 0.15s forwards; }
+  /* BoldBlue wordmark — the primary mark; Pablo Fusco sits smaller beneath it */
+  .bb-logo { width:clamp(300px,54vw,720px); height:auto; display:block; margin:clamp(20px,3.4vh,40px) auto 0;
+             opacity:0; animation:fadeUp 0.9s ease 0.28s forwards; }
+  .hero-logo { margin:clamp(12px,2vh,22px) 0 0; }
+  .glitch { font-family:'Archivo Black','Inter Tight',sans-serif; font-weight:900; text-transform:uppercase;
+            line-height:0.9; letter-spacing:-0.02em; font-size:clamp(21px,4.3vw,50px);
+            position:relative; display:block; color:var(--blue); user-select:none;
+            opacity:0; animation:fadeUp 0.9s ease 0.42s forwards; }
+  /* RGB-split glitch layers driven by data-text */
+  .glitch::before, .glitch::after { content:attr(data-text); position:absolute; inset:0; white-space:pre;
+            clip-path:inset(0 0 100% 0); opacity:0.9; pointer-events:none; }
+  .glitch::before { color:var(--cyan);    transform:translate(-2px,0); mix-blend-mode:multiply; }
+  .glitch::after  { color:var(--magenta); transform:translate(2px,0);  mix-blend-mode:multiply; }
+  .glitch.go::before { animation:glitchTop 0.42s steps(2,end) both; }
+  .glitch.go::after  { animation:glitchBot 0.42s steps(2,end) both; }
+  @keyframes glitchTop {
+    0%{clip-path:inset(0 0 100% 0);transform:translate(-2px,-1px)}
+    20%{clip-path:inset(10% 0 55% 0);transform:translate(-5px,0)}
+    40%{clip-path:inset(40% 0 32% 0);transform:translate(4px,-2px)}
+    60%{clip-path:inset(20% 0 60% 0);transform:translate(-3px,1px)}
+    80%{clip-path:inset(62% 0 12% 0);transform:translate(3px,0)}
+    100%{clip-path:inset(0 0 100% 0);transform:translate(0,0)}
+  }
+  @keyframes glitchBot {
+    0%{clip-path:inset(100% 0 0 0);transform:translate(2px,1px)}
+    20%{clip-path:inset(58% 0 20% 0);transform:translate(5px,0)}
+    40%{clip-path:inset(30% 0 42% 0);transform:translate(-4px,2px)}
+    60%{clip-path:inset(66% 0 8% 0);transform:translate(3px,-1px)}
+    80%{clip-path:inset(14% 0 70% 0);transform:translate(-3px,0)}
+    100%{clip-path:inset(100% 0 0 0);transform:translate(0,0)}
+  }
+  .hero-role { margin-top:clamp(18px,3vh,34px); opacity:0; animation:fadeUp 0.9s ease 0.5s forwards; }
+  .scroll-hint { position:absolute; bottom:clamp(22px,4vh,40px); left:50%; transform:translateX(-50%);
+                 opacity:0.55; animation:bob 2.4s ease-in-out infinite; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+  @keyframes bob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(7px)} }
+
+  /* ── reel ─────────────────────────────────────────────── */
+  .reel { padding:clamp(40px,9vh,120px) 0; }
+  .reel-frame { position:relative; width:100%; aspect-ratio:16/9; background:var(--blue); border-radius:6px; overflow:hidden;
+                box-shadow:0 30px 80px rgba(1,1,124,0.16); }
+  .reel-frame video { width:100%; height:100%; object-fit:cover; display:block; }
+  .reel-ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+             color:#fff; text-align:center; padding:24px; }
+  .reel-ph .dot { width:54px; height:54px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.5);
+                  display:flex; align-items:center; justify-content:center; }
+  .reel-ph .dot::before { content:''; border-left:14px solid #fff; border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:4px; }
+  .reel-cap { display:flex; justify-content:space-between; align-items:baseline; margin-top:16px; gap:20px; }
+  .reel-cap .t { font-family:var(--mono); font-size:12px; letter-spacing:0.2em; text-transform:uppercase; opacity:0.5; }
+
+  /* ── about ────────────────────────────────────────────── */
+  .about { padding:clamp(50px,11vh,150px) 0; border-top:1px solid var(--line); }
+  .about-grid { display:grid; grid-template-columns:1fr 1.35fr; gap:clamp(24px,5vw,80px); align-items:start; }
+  .about h2 { font-weight:900; text-transform:uppercase; letter-spacing:-0.03em; line-height:0.94; font-size:clamp(40px,7vw,104px); }
+  .about-body p { font-size:clamp(17px,1.5vw,22px); line-height:1.5; font-weight:400; opacity:0.85; margin-bottom:1.1em; max-width:56ch; }
+  .tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:clamp(20px,3vh,34px); }
+  .tag { font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:8px 14px;
+         border:1px solid var(--line); border-radius:100px; opacity:0.8; }
+
+  /* ── contact ──────────────────────────────────────────── */
+  .contact { background:var(--blue); color:#fff; padding:clamp(60px,13vh,170px) 0; }
+  .contact ::selection { background:#fff; color:var(--blue); }
+  .contact .sec-label { opacity:0.6; }
+  .contact h2 { font-weight:900; text-transform:uppercase; letter-spacing:-0.03em; line-height:0.92; font-size:clamp(44px,9vw,150px); }
+  .contact-mail { display:inline-block; margin-top:clamp(24px,4vh,48px); font-size:clamp(22px,3vw,42px); font-weight:600;
+                  color:#fff; text-decoration:none; border-bottom:2px solid rgba(255,255,255,0.35); padding-bottom:4px;
+                  transition:border-color 0.3s ease; }
+  .contact-mail:hover { border-color:#fff; }
+  .contact-row { display:flex; flex-wrap:wrap; gap:24px 40px; margin-top:clamp(34px,6vh,70px); }
+  .contact-row a { color:rgba(255,255,255,0.7); text-decoration:none; font-family:var(--mono); font-size:12px; letter-spacing:0.18em;
+                   text-transform:uppercase; transition:color 0.25s ease; }
+  .contact-row a:hover { color:#fff; }
+
+  .foot { background:var(--blue); color:rgba(255,255,255,0.45); font-family:var(--mono); font-size:11px; letter-spacing:0.18em;
+          text-transform:uppercase; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+          padding:24px clamp(20px,5vw,64px) 40px; }
+
+  @media (max-width:760px){
+    .about-grid { grid-template-columns:1fr; gap:28px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .reveal { transition:none; } .scroll-hint{ animation:none; }
+    .glitch, .hero-kicker, .hero-role { animation:none; opacity:1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── top bar ──────────────────────────────────────────── -->
+<header class="topbar">
+  <span class="mono">— Director —</span>
+  <span class="mono">MX · 2026</span>
+</header>
+
+<!-- ── hero ─────────────────────────────────────────────── -->
+<section class="hero" id="hero">
+  <span class="mono hero-kicker">Director · Reel 2026</span>
+  <img class="bb-logo" src="assets/logo_blue.svg" alt="BoldBlue" />
+  <div class="hero-logo" id="glitch">
+    <span class="glitch" data-text="PABLO FUSCO">PABLO FUSCO</span>
+  </div>
+  <span class="mono hero-role">IA · Humor · Film</span>
+  <span class="mono scroll-hint">Scroll ↓</span>
+</section>
+
+<!-- ── reel ─────────────────────────────────────────────── -->
+<section class="reel" id="reel">
+  <div class="wrap">
+    <div class="sec-label reveal">01 — Reel</div>
+    <div class="reel-frame reveal">
+      <!-- Cuando exista videos/reel.mp4 se reproduce solo; mientras, placeholder. -->
+      <video id="reelVideo" muted loop playsinline preload="metadata" poster="" style="display:none"></video>
+      <div class="reel-ph" id="reelPh">
+        <div class="dot"></div>
+        <span class="mono">Reel · video pendiente</span>
+        <span class="mono" style="opacity:0.55">videos/reel.mp4</span>
+      </div>
+    </div>
+    <div class="reel-cap reveal">
+      <span class="t">Pablo Fusco · Reel</span>
+      <span class="t">2026</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── about ────────────────────────────────────────────── -->
+<section class="about" id="about">
+  <div class="wrap">
+    <div class="sec-label reveal">02 — About</div>
+    <div class="about-grid">
+      <h2 class="reveal">Pablo<br>Fusco</h2>
+      <div class="about-body reveal">
+        <p>[Descripción placeholder] Pablo Fusco es director enfocado en IA, humor y film.
+           Aquí va su bio: trayectoria, enfoque creativo, clientes y el tono que define su trabajo.</p>
+        <p>[Segundo párrafo placeholder] Un par de líneas más sobre su proceso, premios o
+           colaboraciones. Reemplazar con el texto real cuando lo tengas.</p>
+        <div class="tags">
+          <span class="tag">IA</span>
+          <span class="tag">Humor</span>
+          <span class="tag">Film</span>
+          <span class="tag">Argentino / LA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── contact ──────────────────────────────────────────── -->
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div class="sec-label reveal">03 — Contact</div>
+    <h2 class="reveal">Let's<br>talk</h2>
+    <a class="contact-mail reveal" href="mailto:hola@patolabs.xyz">hola@patolabs.xyz</a>
+    <div class="contact-row reveal">
+      <a href="#">Instagram ↗</a>
+      <a href="#">Vimeo ↗</a>
+      <a href="#">LinkedIn ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>Pablo Fusco © 2026</span>
+  <span>Pato Labs · CDMX</span>
+</footer>
+
+<script>
+// ── reveal on scroll ────────────────────────────────────
+(function(){
+  var els = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+  if(!('IntersectionObserver' in window)){ els.forEach(function(e){ e.classList.add('in'); }); return; }
+  var io = new IntersectionObserver(function(ents){
+    ents.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.15});
+  els.forEach(function(e){ io.observe(e); });
+})();
+
+// ── subtle periodic glitch on the logo (+ on hover) ─────
+(function(){
+  var g = document.getElementById('glitch');
+  if(!g) return;
+  var lines = Array.prototype.slice.call(g.querySelectorAll('.glitch'));
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function burst(){ lines.forEach(function(l){ l.classList.remove('go'); void l.offsetWidth; l.classList.add('go'); }); }
+  g.addEventListener('mouseenter', burst);
+  if(!reduce){
+    // occasional glitch, not constant → "muy sencillo"
+    (function loop(){
+      var wait = 3200 + Math.floor(Math.random()*3600);
+      setTimeout(function(){ burst(); loop(); }, wait);
+    })();
+  }
+})();
+
+// ── reel: swap placeholder → video once the file exists ─
+(function(){
+  var v = document.getElementById('reelVideo'), ph = document.getElementById('reelPh');
+  if(!v) return;
+  v.src = 'videos/reel.mp4';
+  v.addEventListener('loadeddata', function(){
+    v.style.display = 'block';
+    if(ph) ph.style.display = 'none';
+    // play/pause with viewport visibility
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){ if(e.isIntersecting){ v.play().catch(function(){}); } else { v.pause(); } });
+    }, {threshold:0.35});
+    io.observe(v);
+  });
+  // if the file 404s, loadeddata never fires → placeholder stays. Clean.
+})();
+</script>
+</body>
+</html>
