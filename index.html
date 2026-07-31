@@ -144,8 +144,8 @@
   .contact-row a:hover { color:#fff; }
 
   /* ── people / whatsapp ─────────────────────────────────── */
-  .contact-head { display:flex; justify-content:space-between; align-items:flex-end; gap:clamp(24px,5vw,64px); flex-wrap:wrap; }
-  .contact-people { display:flex; flex-direction:column; gap:20px; align-items:flex-end; text-align:right; }
+  .contact-head { display:flex; justify-content:space-between; align-items:center; gap:clamp(24px,5vw,64px); flex-wrap:wrap; }
+  .contact-people { display:flex; flex-direction:column; gap:clamp(28px,4vh,44px); align-items:flex-end; text-align:right; }
   .contact-people .wa { flex-direction:row-reverse; }
   .contact-people .who { align-items:flex-end; }
   @media (max-width:640px){
@@ -153,12 +153,12 @@
     .contact-people .wa { flex-direction:row; }
     .contact-people .who { align-items:flex-start; }
   }
-  .wa { display:inline-flex; align-items:center; gap:12px; color:#fff; text-decoration:none; transition:opacity 0.25s ease; }
+  .wa { display:inline-flex; align-items:center; gap:16px; color:#fff; text-decoration:none; transition:opacity 0.25s ease; }
   .wa:hover { opacity:0.75; }
-  .wa svg { width:28px; height:28px; flex:none; fill:#fff; }
-  .wa .who { display:flex; flex-direction:column; line-height:1.25; }
-  .wa .name { font-weight:600; font-size:clamp(16px,1.6vw,20px); }
-  .wa .num { font-family:var(--mono); font-size:12px; letter-spacing:0.1em; opacity:0.7; }
+  .wa svg { width:36px; height:36px; flex:none; fill:#fff; }
+  .wa .who { display:flex; flex-direction:column; line-height:1.25; gap:2px; }
+  .wa .name { font-weight:600; font-size:clamp(20px,2.2vw,28px); }
+  .wa .num { font-family:var(--mono); font-size:clamp(13px,1.1vw,15px); letter-spacing:0.1em; opacity:0.7; }
 
   .foot { background:var(--blue); color:rgba(255,255,255,0.45); font-family:var(--mono); font-size:11px; letter-spacing:0.18em;
           text-transform:uppercase; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
