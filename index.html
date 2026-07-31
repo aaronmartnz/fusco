@@ -41,8 +41,32 @@
 
   /* ── top bar ──────────────────────────────────────────── */
   .topbar { position:fixed; top:0; left:0; right:0; z-index:50; display:flex; justify-content:space-between; align-items:center;
-            padding:clamp(16px,2.4vh,26px) clamp(20px,5vw,64px); mix-blend-mode:difference; color:#fff; pointer-events:none; }
+            padding:clamp(16px,2.4vh,26px) clamp(20px,5vw,64px); padding-left:84px; mix-blend-mode:difference; color:#fff; pointer-events:none; }
   .topbar .mono { pointer-events:auto; }
+  @media (max-width:900px){ .topbar { padding-left:58px; } }
+
+  /* Persistent animated isotype — fixed top-left, click → back to top.
+     Turns white over the dark (blue) contact/footer region. */
+  .home-iso { position:fixed; top:22px; left:32px; width:34px; height:48px; z-index:55;
+    cursor:pointer; pointer-events:auto; background:none; border:0; padding:0; display:block;
+    -webkit-tap-highlight-color:transparent; }
+  .home-iso svg { width:100%; height:100%; display:block; overflow:visible; }
+  .home-iso .iso-left, .home-iso .iso-right { fill:var(--blue); transition:fill .35s ease; }
+  .home-iso.on-dark .iso-left, .home-iso.on-dark .iso-right { fill:#fff; }
+  .home-iso:focus-visible { outline:2px solid var(--cyan); outline-offset:4px; border-radius:2px; }
+  @media (max-width:900px){ .home-iso { top:16px; left:18px; width:28px; height:40px; } }
+  .home-iso .iso-left, .home-iso .iso-right { transform-box:fill-box; transform-origin:center; }
+  .home-iso .iso-left  { animation:isoSwapA 4.6s ease-in-out infinite; }
+  .home-iso .iso-right { animation:isoSwapB 4.6s ease-in-out infinite; }
+  @keyframes isoSwapA {
+    0%{transform:translateY(0)} 30%{transform:translateY(0)} 50%{transform:translateY(41%)}
+    80%{transform:translateY(41%)} 100%{transform:translateY(0)}
+  }
+  @keyframes isoSwapB {
+    0%{transform:translateY(0)} 30%{transform:translateY(0)} 50%{transform:translateY(-41%)}
+    80%{transform:translateY(-41%)} 100%{transform:translateY(0)}
+  }
+  @media (prefers-reduced-motion: reduce){ .home-iso .iso-left,.home-iso .iso-right { animation:none; } }
 
   /* ── hero ─────────────────────────────────────────────── */
   .hero { min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
@@ -175,6 +199,14 @@
 </head>
 <body>
 
+<!-- ── isotipo animado — fijo arriba-izquierda, click → top ─ -->
+<button class="home-iso" id="homeIso" type="button" aria-label="Volver arriba">
+  <svg viewBox="0 0 402.4 567" aria-hidden="true">
+    <path class="iso-left" d="M131.5,0h-11.7C54,0,.2,53.1,0,118.5c-.1,31.1,11.6,60.4,33.1,82.7C11.6,223.5-.1,252.8,0,283.9c.2,65.3,54,118.5,119.8,118.5h118V106.2C237.8,47.7,190.1,0,131.5,0ZM164.6,329.2h-44.8c-25.6,0-46.5-20.4-46.6-45.5,0-12.2,4.7-23.8,13.3-32.4,8.6-8.7,20.1-13.4,32.4-13.4h45.7v91.4ZM164.6,164.6h-45.7c-12.2,0-23.7-4.8-32.4-13.4-8.6-8.7-13.4-20.2-13.3-32.4,0-25.1,21-45.5,46.6-45.5h11.7c18.2,0,33.1,14.8,33.1,33.1v58.3Z"/>
+    <path class="iso-right" d="M402.4,283.1c-.2-65.3-54-118.5-119.8-118.5h-118v296.1c0,58.6,47.7,106.2,106.2,106.2h11.7c65.8,0,119.5-53.1,119.8-118.5.1-31.1-11.6-60.4-33.1-82.7,21.5-22.4,33.2-51.6,33.1-82.7ZM282.6,493.8h-11.7c-18.2,0-33.1-14.8-33.1-33.1v-58.3h45.7c12.2,0,23.7,4.8,32.4,13.4,8.6,8.7,13.4,20.2,13.3,32.4,0,25.1-21,45.5-46.6,45.5ZM315.9,315.7c-8.6,8.7-20.1,13.4-32.4,13.4h-45.7v-91.4h44.8c25.6,0,46.5,20.4,46.6,45.5,0,12.2-4.7,23.8-13.3,32.4Z"/>
+  </svg>
+</button>
+
 <!-- ── top bar ──────────────────────────────────────────── -->
 <header class="topbar">
   <span class="mono">— Director —</span>
@@ -184,7 +216,7 @@
 <!-- ── hero ─────────────────────────────────────────────── -->
 <section class="hero" id="hero">
   <span class="mono hero-kicker">Director · Reel 2026</span>
-  <img class="bb-logo" src="assets/logo_blue.svg" alt="BoldBlue" />
+  <img class="bb-logo" src="assets/logo_blue_bajas.svg" alt="BoldBlue" />
   <div class="hero-logo" id="glitch">
     <span class="glitch" data-text="PABLO FUSCO">PABLO FUSCO</span>
   </div>
@@ -372,6 +404,23 @@
   frame.addEventListener('pointermove', function(){ showCtrl(false); });
   frame.addEventListener('pointerdown', function(){ showCtrl(false); });
   showCtrl(true);
+})();
+
+// ── isotipo: click → top + color blanco sobre la sección azul ─
+(function(){
+  var iso = document.getElementById('homeIso'),
+      dark = document.getElementById('contact');
+  if(!iso) return;
+  iso.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+  if(!dark) return;
+  var isoY = iso.getBoundingClientRect().top + iso.offsetHeight/2;  // ~centro vertical del iso
+  function update(){
+    var r = dark.getBoundingClientRect();
+    iso.classList.toggle('on-dark', r.top <= isoY && r.bottom >= isoY);
+  }
+  update();
+  window.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('resize', update);
 })();
 </script>
 </body>
