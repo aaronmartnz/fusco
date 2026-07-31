@@ -21,6 +21,20 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { height:100%; }
   html { scroll-behavior:smooth; }
+  html.loading, html.loading body { overflow:hidden; }
+
+  /* ── preloader ─────────────────────────────────────────── */
+  .preloader { position:fixed; inset:0; z-index:999; background:var(--bg); color:var(--blue);
+               display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+               transition:opacity 0.6s ease; }
+  .preloader.done { opacity:0; pointer-events:none; }
+  .pre-iso { width:clamp(48px,7vw,72px); height:auto; }
+  .pre-iso svg { width:100%; height:auto; display:block; overflow:visible; }
+  .pre-iso .iso-left, .pre-iso .iso-right { fill:var(--blue); transform-box:fill-box; transform-origin:center; }
+  .pre-iso .iso-left  { animation:isoSwapA 4.6s ease-in-out infinite; }
+  .pre-iso .iso-right { animation:isoSwapB 4.6s ease-in-out infinite; }
+  .pre-pct { font-family:var(--mono); font-size:13px; letter-spacing:0.28em; font-variant-numeric:tabular-nums; opacity:0.7; }
+  @media (prefers-reduced-motion: reduce){ .pre-iso .iso-left,.pre-iso .iso-right { animation:none; } }
   body {
     font-family:var(--sans);
     background:var(--bg);
@@ -200,6 +214,17 @@
 </head>
 <body>
 
+<!-- ── preloader — logo animado + % de carga del reel ─────── -->
+<div class="preloader" id="preloader">
+  <div class="pre-iso">
+    <svg viewBox="0 0 402.4 567" aria-hidden="true">
+      <path class="iso-left" d="M131.5,0h-11.7C54,0,.2,53.1,0,118.5c-.1,31.1,11.6,60.4,33.1,82.7C11.6,223.5-.1,252.8,0,283.9c.2,65.3,54,118.5,119.8,118.5h118V106.2C237.8,47.7,190.1,0,131.5,0ZM164.6,329.2h-44.8c-25.6,0-46.5-20.4-46.6-45.5,0-12.2,4.7-23.8,13.3-32.4,8.6-8.7,20.1-13.4,32.4-13.4h45.7v91.4ZM164.6,164.6h-45.7c-12.2,0-23.7-4.8-32.4-13.4-8.6-8.7-13.4-20.2-13.3-32.4,0-25.1,21-45.5,46.6-45.5h11.7c18.2,0,33.1,14.8,33.1,33.1v58.3Z"/>
+      <path class="iso-right" d="M402.4,283.1c-.2-65.3-54-118.5-119.8-118.5h-118v296.1c0,58.6,47.7,106.2,106.2,106.2h11.7c65.8,0,119.5-53.1,119.8-118.5.1-31.1-11.6-60.4-33.1-82.7,21.5-22.4,33.2-51.6,33.1-82.7ZM282.6,493.8h-11.7c-18.2,0-33.1-14.8-33.1-33.1v-58.3h45.7c12.2,0,23.7,4.8,32.4,13.4,8.6,8.7,13.4,20.2,13.3,32.4,0,25.1-21,45.5-46.6,45.5ZM315.9,315.7c-8.6,8.7-20.1,13.4-32.4,13.4h-45.7v-91.4h44.8c25.6,0,46.5,20.4,46.6,45.5,0,12.2-4.7,23.8-13.3,32.4Z"/>
+    </svg>
+  </div>
+  <div class="pre-pct" id="prePct">0%</div>
+</div>
+
 <!-- ── isotipo animado — fijo arriba-izquierda, click → top ─ -->
 <button class="home-iso" id="homeIso" type="button" aria-label="Volver arriba">
   <svg viewBox="0 0 402.4 567" aria-hidden="true">
@@ -230,7 +255,7 @@
     <div class="sec-label reveal">01 — Reel</div>
     <div class="reel-frame reveal" id="reelFrame">
       <!-- autoplay muted (para que cargue/se vea en mobile) + controles custom -->
-      <video id="reelVideo" muted loop playsinline webkit-playsinline preload="metadata" src="videos/reel.mp4"></video>
+      <video id="reelVideo" muted loop playsinline webkit-playsinline preload="metadata"></video>
       <div class="reel-ph" id="reelPh">
         <div class="dot"></div>
         <span class="mono">Cargando reel…</span>
@@ -299,6 +324,49 @@
 </footer>
 
 <script>
+// ── preloader: descarga el reel mostrando % real, luego revela ──
+(function(){
+  var pre  = document.getElementById('preloader'),
+      pct  = document.getElementById('prePct'),
+      v    = document.getElementById('reelVideo'),
+      url  = 'videos/reel.mp4',
+      done = false;
+  document.documentElement.classList.add('loading');
+
+  function reveal(){
+    if(done) return; done = true;
+    pct.textContent = '100%';
+    document.documentElement.classList.remove('loading');
+    pre.classList.add('done');
+    setTimeout(function(){ pre.style.display = 'none'; }, 650);
+  }
+  // fallback: sin fetch/stream, carga normal y revela al cargar metadata
+  function fallback(){ if(v && !v.src){ v.src = url; } reveal(); }
+
+  if(!('fetch' in window) || typeof ReadableStream === 'undefined'){ fallback(); return; }
+
+  var safety = setTimeout(fallback, 45000);   // nunca se queda pegado
+  fetch(url).then(function(res){
+    if(!res.ok || !res.body) throw new Error('no-stream');
+    var total  = +res.headers.get('Content-Length') || 0,
+        loaded = 0, chunks = [],
+        reader = res.body.getReader();
+    (function pump(){
+      reader.read().then(function(r){
+        if(r.done){
+          clearTimeout(safety);
+          if(v){ v.src = URL.createObjectURL(new Blob(chunks, {type:'video/mp4'})); }
+          setTimeout(reveal, 120);
+          return;
+        }
+        chunks.push(r.value); loaded += r.value.length;
+        if(total){ pct.textContent = Math.min(99, Math.round(loaded/total*100)) + '%'; }
+        pump();
+      }).catch(function(){ clearTimeout(safety); fallback(); });
+    })();
+  }).catch(function(){ clearTimeout(safety); fallback(); });
+})();
+
 // ── reveal on scroll ────────────────────────────────────
 (function(){
   var els = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
