@@ -40,10 +40,9 @@
   .reveal.in { opacity:1; transform:none; }
 
   /* ── top bar ──────────────────────────────────────────── */
-  .topbar { position:fixed; top:0; left:0; right:0; z-index:50; display:flex; justify-content:space-between; align-items:center;
-            padding:clamp(16px,2.4vh,26px) clamp(20px,5vw,64px); padding-left:84px; mix-blend-mode:difference; color:#fff; pointer-events:none; }
+  .topbar { position:fixed; top:0; left:0; right:0; z-index:50; display:flex; justify-content:flex-end; align-items:center;
+            padding:clamp(16px,2.4vh,26px) clamp(20px,5vw,64px); mix-blend-mode:difference; color:#fff; pointer-events:none; }
   .topbar .mono { pointer-events:auto; }
-  @media (max-width:900px){ .topbar { padding-left:58px; } }
 
   /* Persistent animated isotype — fixed top-left, click → back to top.
      Turns white over the dark (blue) contact/footer region. */
@@ -209,7 +208,6 @@
 
 <!-- ── top bar ──────────────────────────────────────────── -->
 <header class="topbar">
-  <span class="mono">— Director —</span>
   <span class="mono">MX · 2026</span>
 </header>
 
